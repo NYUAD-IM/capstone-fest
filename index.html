@@ -1,108 +1,11 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>A&H Capstone Fest 2020</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans+Condensed:wght@700&family=Montserrat:wght@500;700&family=Libre+Baskerville&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="css/style.css">
-    <meta charset="utf-8">
-    <meta content='text/html; charset=utf-8' http-equiv='Content-Type'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>
-    <script src="js/vue.js"></script>
-  </head>
-  <body>
-    <div id="app" v-bind:class="{ hasBanner: !tiles.length }">
-      <div v-if="!tiles.length" class="banner">
-        <p v-if="isSignedIn === null">Checking login status...</p>
-        <p v-if="isSignedIn === true && !tiles.length">Loading projects...</p>
-        <p v-if="isSignedIn === false">NYU SSO required to view this page. Please <a onclick="handleAuthClick();">click here to log in</a>.</p>
-      </div>
-      <div class="header">
-        <div class="gradient"></div>
-        <a v-on:click="filterTilesByTag('')"><img class="capstone-fest-logo" src="assets/capstone-fest-logo.svg" alt="Arts & Humanities Capstone Fest 2020"></a>
-        <h1>May 6—7, 2020. <a v-on:click="filterTilesByTag('live')">Live events</a> from 8-11 PM</h1>
-        <a href="https://nyuad.nyu.edu/" target="_blank"><img class="nyuad-logo" src="assets/nyuad-logo.svg" alt="NYU Abu Dhabi"></a>
-        <h2><span><a v-on:click="filterTilesByTag('')">A&H Capstone Fest 2020</a></span><span>.</span> <span><a v-on:click="filterTilesByTag('live')">Live events</a> from 8-11 PM</span></h2>
-        <div class="search">
-          <transition name="search-fade" v-on:enter="onSearchEnter">
-            <div class="search-input-container" v-if="searchInputVisible">
-              <input type="text" v-model="search" placeholder="Search keyword..."/>
-            </div>
-          </transition>
-          <button v-on:click="searchInputVisible = !searchInputVisible" id="search-button"></button>
-        </div>
-      </div>
-      <div class="container">
-        <div v-if="search || activeTag" class="tile results">
-          <h3>Showing Results For</h3>
-          <h4><span  v-if="search">"{{ search }}" </span><span v-if="activeTag"># {{ activeTag }}</span></h4>
-          <a v-on:click="removeFilters"><img src="assets/left-arrow-icon.svg" alt="Left Arrow Icon"><h5>Back to All Projects</h5></a>
-        </div>
-        <div v-bind:style="{ order: tile.order }" class="tile video" v-for="tile in filteredVideoTiles">
-          <h3>{{ tile.title }}</h3>
-          <iframe v-if="tile.link.includes('vimeo') || tile.link.includes('youtube')" v-bind:src="tile.link" frameborder="0" allowfullscreen></iframe>
-          <video v-else controls v-bind:poster="tile.image">
-            <source v-bind:src="tile.link" type="video/mp4">
-          Your browser does not support the video tag.
-          </video>
-        </div>
-        <div v-bind:style="{ order: tile.order }" class="tile live" v-for="tile in filteredLiveTiles">
-          <h3>Live Event</h3>
-          <h4>{{ tile.description }}</h4>
-          <a v-bind:href="tile.link" target="_blank"><h5>{{ tile.title }}</h5></a>
-          <h6>{{ tile.status }}</h6>
-          <div class="tags" v-if="tile.tags">
-            <a v-for="tag in tile.tags" v-on:click="filterTilesByTag(tag)"># {{ tag }}</a>
-          </div>
-          <img src="assets/clock-icon.svg" alt="Clock Icon">
-        </div>
-        <div v-bind:style="{ order: tile.order }" class="tile recorded" v-for="tile in filteredRecordedTiles">
-          <h3>Recorded Event</h3>
-          <a v-bind:href="tile.link" target="_blank"><h5>{{ tile.title }}</h5></a>
-          <h6>{{ tile.description }}</h6>
-          <div class="tags" v-if="tile.tags">
-            <a v-for="tag in tile.tags" v-on:click="filterTilesByTag(tag)"># {{ tag }}</a>
-          </div>
-        </div>
-        <div v-bind:style="{ order: tile.order }" class="tile book" v-for="tile in filteredBookTiles">
-          <img v-bind:src="tile.image" alt="Capstone Archival Book">
-          <div>
-            <a v-bind:href="tile.link" target="_blank"><h5>{{ tile.title }}</h5></a>
-          </div>
-        </div>
-        <div v-bind:style="{ order: tile.order, backgroundImage: 'linear-gradient(to right, #000c, #000c, #0000), url('+tile.image+')'}" class="tile project" v-for="tile in filteredProjectTiles">
-          <a v-if="tile.link" v-bind:href="tile.link" target="_blank"><h3>{{ tile.title }}</h3></a>
-          <a v-else><h3>{{ tile.title }}</h3></a>
-          <h4>{{ tile.subtitle }}</h4>
-          <p>{{ tile.description }}</p>
-          <div class="tags" v-if="tile.tags">
-            <a v-for="tag in tile.tags" v-on:click="filterTilesByTag(tag)"># {{ tag }}</a>
-          </div>
-        </div>
-      </div>
-      <div class="footer">
-        <div v-if="majors.length" class="majors">
-          <h3>All Majors</h3>
-          <ul>
-            <li v-for="major in majors">
-              <a v-on:click="filterTilesByTag(major.name)">{{ major.name }}</a>
-            </li>
-          </ul>
-        </div>
-        <div class="notice">
-          <h3>Content Privacy</h3>
-          <p>This site and its content is private to the New York University community. Do not share screenshots, text, or other content from this page or linked pages without express permission from the authors.</p>
-          <button v-if="isSignedIn === false" onclick="handleAuthClick();">Log In</button>
-          <button v-if="isSignedIn === null">Checking...</button>
-          <button v-if="isSignedIn === true" onclick="handleSignoutClick();">Log Out</button>
-          <p>© New York University Abu Dhabi</p>
-        </div>
-      </div>
-    </div>
-    <script src="js/script.js"></script>
-    <script async defer src="https://apis.google.com/js/api.js"
-      onload="this.onload=function(){};handleClientLoad()"
-      onreadystatechange="if (this.readyState === 'complete') this.onload()">
-    </script>
-  </body>
+   <head>
+      <title>Redirecting...</title>
+      <meta http-equiv = "refresh" content = "2; url = http://capstone.abudhabi.nyu.edu/ah/" />
+   </head>
+   <body>
+     <p>Redirecting to <a href="http://capstone.abudhabi.nyu.edu/ah/">http://capstone.abudhabi.nyu.edu/ah/</a></p>
+     <p>If this page is not redirecting, please check if you are connected to <a href="https://www.nyu.edu/life/information-technology/getting-started/network-and-connectivity/vpn.html">NYU VPN</a>.</p>
+   </body>
 </html>
